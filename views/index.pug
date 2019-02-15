@@ -1,0 +1,69 @@
+doctype html
+html
+  head
+    meta(charset=utf-8)
+    title Chatkit demo
+    script(src='https://unpkg.com/@pusher/chatkit-client@1/dist/web/chatkit.js')
+    script(src='/javascripts/chatkit.js')
+  body
+  div(id='login-con')
+    form(id='login-form')
+      input(type='text' id='login-sign')
+      input(type='submit')
+  div(id='message-con')
+    ul(id='message-list')
+    form(id='message-form')
+      input(type='text' id='message-text')
+      input(type='submit' value='提交')
+  script.
+    const loginForm = document.getElementById('login-form');
+    const loginInput = document.getElementById('login-sign');
+    if (localStorage.getItem('userSign')) {
+      loginInput.value =  localStorage.getItem('userSign');
+    }
+    loginForm.addEventListener('submit',e=>{
+      e.preventDefault();
+      if (loginInput.value) {
+        localStorage.setItem('userSign', loginInput.value);
+        const chatManager = getChatManagerByID(loginInput.value);
+        chatManager.then(user=>{
+          console.log(user);
+          const fun = function() {
+            // 监听消息
+            user.subscribeToRoom({
+              roomId: user.rooms[0].id,
+              hooks: {
+                onMessage: message => {
+                  const ul = document.getElementById("message-list");
+                  const li = document.createElement("li");
+                  li.appendChild(
+                    document.createTextNode(`${message.senderId}: ${message.text}`)
+                  );
+                  ul.appendChild(li);
+                }
+              }
+            });
+            // 发送消息
+            const form = document.getElementById("message-form");
+            form.addEventListener("submit", e => {
+              e.preventDefault();
+              const input = document.getElementById("message-text");
+              user.sendMessage({
+                text: input.value,
+                roomId: user.rooms[0].id
+              });
+              input.value = "";
+            });
+          }
+          if (!user.rooms[0]) {
+            user.joinRoom({ roomId: '19377350' }).then(()=>{
+              fun();
+            });
+          } else {
+            fun();
+          }
+
+        });
+      }
+    });
+  
