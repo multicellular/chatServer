@@ -1,14 +1,17 @@
 const Koa = require('koa')
-const app = new Koa()
 const views = require('koa-views')
 const json = require('koa-json')
 const onerror = require('koa-onerror')
 const bodyparser = require('koa-bodyparser')
+const session = require('koa-session-minimal')
+const MysqlStore = require('koa-mysql-session') 
 const logger = require('koa-logger')
-
 const index = require('./routes/index')
 const user = require('./routes/user')
+const config = require('./config/default')
+require('./lib/mysql')
 
+const app = new Koa()
 // error handler
 onerror(app)
 
@@ -23,6 +26,15 @@ app.use(require('koa-static')(__dirname + '/public'))
 app.use(views(__dirname + '/views', {
   extension: 'pug'
   // extension: 'html'
+}))
+app.use(session({
+  key: 'USER_SID',
+  store: new MysqlStore({
+    user: config.database.USERNAME,
+    password: config.database.PASSWORD,
+    database: config.database.DATABASE,
+    host: config.database.HOST
+  })
 }))
 
 // logger
