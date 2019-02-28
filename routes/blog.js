@@ -16,7 +16,7 @@ router.get('/getblogs', async (ctx, next) => {
         });
 
         ctx.body = {
-            data: 0,
+            code: 0,
             blogs
         }
     }).catch(err => console.log(err));
@@ -26,7 +26,7 @@ router.get('/getcomments', async (ctx, next) => {
     const { blogid } = ctx.request.query;
     await blogModel.findAllBlogComments(blogid).then(result => {
         ctx.body = {
-            data: 0,
+            code: 0,
             comments: result
         }
     }).catch(err => console.log(err));
@@ -58,7 +58,7 @@ router.post('/postblog', async (ctx, next) => {
     await blogModel.insertBlog([title, content, imageUrlsStr, uavator, uname, uid,
         source_uname, source_uid, source_uavator, forward_comment, source_id]).then(result => {
             ctx.body = {
-                data: 0,
+                code: 0,
                 blog: {
                     title, content, images: imageUrlsStr, uavator, uname, uid, comments: '0', views: '0', forwards: '0',
                     id: result.insertId, forwardObj
@@ -75,7 +75,7 @@ router.post('/postcomment', async (ctx, next) => {
             blogModel.unpdateBlogComments([comments, blogid]);
         });
         ctx.body = {
-            data: 0,
+            code: 0,
             comment: { blogid, content, uname, uid, uavator, id: result.insertId }
         }
     }).catch(err => console.log(err));

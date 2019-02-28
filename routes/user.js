@@ -2,6 +2,15 @@ const router = require('koa-router')()
 const userModel = require('../lib/mysql')
 const fs = require('fs')
 const md5 = require('md5')
+const jwt = require('jsonwebtoken')
+
+const verify = (...args) => {
+    return new Promise((resolve, reject) => {
+        jwt.verify(...args, (err, decoded) => {
+            err ? reject(err) : resolve(decoded);
+        });
+    });
+}
 
 router.prefix('/api/user')
 
@@ -16,8 +25,9 @@ router.post('/signup', async (ctx, next) => {
                 console.log(error)
             }
             ctx.body = {
-                data: '0'
-            };
+                code: -1,
+                msg: '用户已经存在！'
+            }
         } else {
             let base64Data = avator.replace(/^data:image\/\w+;base64,/, "");
             let dataBuffer = Buffer.from(base64Data, 'base64');
@@ -34,16 +44,41 @@ router.post('/signin', async (ctx, next) => {
     await userModel.findUserByName(name).then(result => {
         console.log(result);
         if (result[0] && result[0].password === md5(password)) {
+            const payload = {
+                id: result[0].id,
+                name: result[0].name,
+                avator: result[0].avator
+            };
+            const my_token = jwt.sign(payload, 'my_token', { expiresIn: '24h' });
             ctx.body = {
-                data: true,
-                user: { avator: result[0].avator, name: result[0].name, id: result[0].id }
+                code: 0,
+                token: my_token,
+                user: payload
             }
         } else {
             ctx.body = {
-                data: false
+                code: -1,
+                msg: '账号或密码错误！'
             }
         }
     }).catch(err => console.log(err));
+});
+
+router.get('/info', async (ctx, next) => {
+    const { authorization } = ctx.header;
+    let payload;
+    if (authorization) {
+        payload = await verify(authorization.split(' ')[1], 'my_token');
+        ctx.body = {
+            code: 0,
+            user: payload
+        }
+    } else {
+        ctx.body = {
+            code: -1,
+            msg: 'no token'
+        }
+    }
 });
 
 module.exports = router

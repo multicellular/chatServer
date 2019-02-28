@@ -6,6 +6,7 @@ const bodyparser = require('koa-bodyparser')
 const session = require('koa-session-minimal')
 const MysqlStore = require('koa-mysql-session')
 const logger = require('koa-logger')
+const jwtKoa = require('koa-jwt')
 const index = require('./routes/index')
 const user = require('./routes/user')
 const blog = require('./routes/blog')
@@ -19,6 +20,8 @@ onerror(app)
 app.use(bodyparser({
   enableTypes: ['json', 'form', 'text']
 }))
+const urls = ['/api/user/signin', '/api/user/signup'];
+app.use(jwtKoa({ secret: 'my_token' }).unless({ path: urls }))
 app.use(json())
 app.use(logger())
 app.use(require('koa-static')(__dirname + '/public'))
