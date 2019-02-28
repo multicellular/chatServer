@@ -9,7 +9,7 @@ process.exec('rm -rf ./public/img/ ./public/css/ ./public/js/ ./public/fonts/ rm
         console.log('stdout:',stdout);
 }); 
 
-process.exec('cp -rf ./web/ ./public/',function (error, stdout, stderr) {
+process.exec('cp -rf ./web/. ./public/',function (error, stdout, stderr) {
   if (error !== null) {
     console.log('cp -rf web error: ' + error);
   }
