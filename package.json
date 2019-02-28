@@ -7,7 +7,7 @@
     "dev": "./node_modules/.bin/nodemon bin/www",
     "prd": "pm2 start bin/www",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "publish": "node bin/publish pm2 start bin/www"
+    "publish": "node bin/publish && rimraf web/* && npm run prd"
   },
   "dependencies": {
     "@pusher/chatkit-server": "^1.0.4",
