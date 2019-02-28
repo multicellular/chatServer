@@ -1,0 +1,2 @@
+(window["webpackJsonp"]=window["webpackJsonp"]||[]).push([["chunk-2d0e1f40"],{"7d41":function(e,t,s){"use strict";s.r(t);var n=function(){var e=this,t=e.$createElement,s=e._self._c||t;return s("text",{staticClass:"message"},[e._v("Now, let's use Vue.js to build your Weex app.")])},u=[],l=s("2877"),a={},c=Object(l["a"])(a,n,u,!1,null,null,null);t["default"]=c.exports}}]);
+//# sourceMappingURL=chunk-2d0e1f40.abcff4c3.js.map

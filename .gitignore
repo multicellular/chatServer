@@ -1,6 +1,6 @@
 .DS_Store
 node_modules
-web_assets
+web
 config/server.yml
 
 # local env files
