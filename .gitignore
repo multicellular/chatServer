@@ -1,7 +1,7 @@
 .DS_Store
 node_modules
 web
-# public
+public
 config/server.yml
 
 # local env files
