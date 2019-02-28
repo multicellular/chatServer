@@ -9,9 +9,9 @@ process.exec('rm -rf ./public/img/ ./public/css/ ./public/js/ rm -f ./public/ind
         console.log('stdout:',stdout);
 }); 
 
-// process.exec('cp -rf ./web/ ./public/',function (error, stdout, stderr) {
-//   if (error !== null) {
-//     console.log('cp -rf web error: ' + error);
-//   }
-// });
+process.exec('cp -rf ./web/ ./public/',function (error, stdout, stderr) {
+  if (error !== null) {
+    console.log('cp -rf web error: ' + error);
+  }
+});
 
