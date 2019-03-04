@@ -10,6 +10,7 @@ const jwtKoa = require('koa-jwt')
 const index = require('./routes/index')
 const user = require('./routes/user')
 const blog = require('./routes/blog')
+const room = require('./routes/room')
 const config = require('./config/default')
 
 const app = new Koa()
@@ -20,12 +21,12 @@ onerror(app)
 app.use(bodyparser({
   enableTypes: ['json', 'form', 'text']
 }))
-const urls = ['/api/user/signin', '/api/user/signup'];
-app.use(jwtKoa({ secret: 'my_token' }).unless({ path: urls }))
 app.use(json())
 app.use(logger())
 app.use(require('koa-static')(__dirname + '/public'))
-// app.use(require('koa-static')(__dirname + '/images'))
+
+const urls = ['/api/user/signin', '/api/user/signup', /^\/api\/blog/];
+app.use(jwtKoa({ secret: 'my_token' , passthrough:true }).unless({ path: urls }))
 
 app.use(views(__dirname + '/views', {
   extension: 'pug'
@@ -53,6 +54,7 @@ app.use(async (ctx, next) => {
 app.use(index.routes(), index.allowedMethods())
 app.use(user.routes(), user.allowedMethods())
 app.use(blog.routes(), user.allowedMethods())
+app.use(room.routes(), room.allowedMethods())
 
 // error-handling
 app.on('error', (err, ctx) => {

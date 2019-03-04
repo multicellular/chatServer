@@ -33,7 +33,15 @@ router.post('/signup', async (ctx, next) => {
             let dataBuffer = Buffer.from(base64Data, 'base64');
             let urlPath = 'avators/' + Date.now() + '.png';
             await fs.writeFile('./public/' + urlPath, dataBuffer, err => { if (err) throw err; });
-            await userModel.insertUser([name, md5(password), urlPath]).then(res => { ctx.body = res });
+            const user = await userModel.insertUser([name, md5(password), urlPath]);
+            // name=?,row_desc=?,uid=?
+            const friends = await userModel.insertFriendRoom([user.insertId, '好友列表', null]);
+            // flist_id=?,uremark=?,uid=?
+            await userModel.insertFriend([friends.insertId, user.insertId, null]);
+            ctx.body = {
+                code: 0,
+                user: user
+            }
         }
     });
 
@@ -42,18 +50,21 @@ router.post('/signup', async (ctx, next) => {
 router.post('/signin', async (ctx, next) => {
     const { name, password } = ctx.request.body;
     await userModel.findUserByName(name).then(result => {
-        console.log(result);
         if (result[0] && result[0].password === md5(password)) {
             const payload = {
                 id: result[0].id,
-                name: result[0].name,
-                avator: result[0].avator
+                name: result[0].name
             };
             const my_token = jwt.sign(payload, 'my_token', { expiresIn: '24h' });
             ctx.body = {
                 code: 0,
                 token: my_token,
-                user: payload
+                user: {
+                    id: result[0].id,
+                    name: result[0].name,
+                    avator: result[0].avator,
+                    bio: result[0].bio,
+                }
             }
         } else {
             ctx.body = {
@@ -69,10 +80,24 @@ router.get('/info', async (ctx, next) => {
     let payload;
     if (authorization) {
         payload = await verify(authorization.split(' ')[1], 'my_token');
-        ctx.body = {
-            code: 0,
-            user: payload
+        const result = await userModel.findUserByName(payload.name);
+        if (result && result[0]) {
+            ctx.body = {
+                code: 0,
+                user: {
+                    id: result[0].id,
+                    name: result[0].name,
+                    avator: result[0].avator,
+                    bio: result[0].bio,
+                }
+            }
+        } else {
+            ctx.body = {
+                code: -1,
+                msg: 'no user'
+            }
         }
+
     } else {
         ctx.body = {
             code: -1,
