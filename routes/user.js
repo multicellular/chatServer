@@ -37,7 +37,7 @@ router.post('/signup', async (ctx, next) => {
             // name=?,row_desc=?,uid=?
             const friends = await userModel.insertFriendRoom([user.insertId, '好友列表', null]);
             // flist_id=?,uremark=?,uid=?
-            await userModel.insertFriend([friends.insertId, user.insertId, null]);
+            await userModel.insertFriend({ flist_id: friends.insertId, uid: user.insertId });
             ctx.body = {
                 code: 0,
                 user: user

@@ -130,11 +130,22 @@ router.get('/searchUsersByName', async (ctx, next) => {
 
 router.post('/createApply', async (ctx, next) => {
     const { verify_message, apply_uid, apply_flist_id, invitees_uid, invitees_flist_id } = ctx.request.body;
-    await roomModel.insertApply([verify_message, apply_uid, apply_flist_id,
-        invitees_uid, invitees_flist_id]);
-    ctx.body = {
-        code: 0
+    const result = await roomModel.insertApply({
+        verify_message, apply_uid, apply_flist_id,
+        invitees_uid, invitees_flist_id
+    });
+
+    if (result.insertId) {
+        ctx.body = {
+            code: 0
+        }
+    } else {
+        ctx.body = {
+            code: -1,
+            msg: "申请已存在"
+        }
     }
+
 });
 
 router.get('/findApply', async (ctx, next) => {
@@ -147,17 +158,17 @@ router.get('/findApply', async (ctx, next) => {
 });
 
 router.post('/allowJoinFriend', async (ctx, next) => {
-        //校验 用户是被邀请人才能删除
-        const { uremark, apply_uid, apply_flist_id, invitees_uid, invitees_flist_id, applyId } = ctx.request.body;
-        // const room = await roomModel.findFriendRoom(uid);
-        // flist_id=?,uid=?,uremark=?
-        await roomModel.insertFriend([invitees_flist_id, apply_uid, uremark]);
-        await roomModel.insertFriend([apply_flist_id, invitees_uid, null]);
-        await roomModel.deleteApply(applyId);
-        ctx.body = {
-            code: 0
-        }
-    });
+    //校验 用户是被邀请人才能删除
+    const { uremark, apply_uid, apply_flist_id, invitees_uid, invitees_flist_id, applyId } = ctx.request.body;
+    // const room = await roomModel.findFriendRoom(uid);
+    // flist_id=?,uid=?,uremark=?
+    await roomModel.insertFriend({ flist_id: invitees_flist_id, uid: apply_uid, uremark });
+    await roomModel.insertFriend({ flist_id: apply_flist_id, uid: invitees_uid });
+    await roomModel.deleteApply(applyId);
+    ctx.body = {
+        code: 0
+    }
+});
 
 // router.post('/joinFriend', async (ctx, next) => {
 //     const { flist_id, uid } = ctx.request.body;
