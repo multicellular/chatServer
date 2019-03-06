@@ -130,6 +130,16 @@ router.get('/searchUsersByName', async (ctx, next) => {
 
 router.post('/createApply', async (ctx, next) => {
     const { verify_message, apply_uid, apply_flist_id, invitees_uid, invitees_flist_id } = ctx.request.body;
+    
+    const res = await roomModel.findFriend(apply_flist_id, invitees_uid);
+    
+    if (res[0]) {
+        ctx.body = {
+            code: -1,
+            msg: "已经在你的好友列表中"
+        }
+        return;
+    }
     const result = await roomModel.insertApply({
         verify_message, apply_uid, apply_flist_id,
         invitees_uid, invitees_flist_id
@@ -154,6 +164,23 @@ router.get('/findApply', async (ctx, next) => {
     ctx.body = {
         code: 0,
         applys
+    }
+});
+
+router.get('/findAllApply', async (ctx, next) => {
+    const { invitees_uid } = ctx.request.query;
+    const applys = await roomModel.findAllApply(invitees_uid);
+    ctx.body = {
+        code: 0,
+        applys
+    }
+});
+
+router.post('/ignoreApply', async (ctx, next) => {
+    const { applyid } = ctx.request.body;
+    await roomModel.updateApply({ applyid, invitees_ignore: 'ignore' });
+    ctx.body = {
+        code: 0
     }
 });
 
