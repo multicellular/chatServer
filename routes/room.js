@@ -3,14 +3,33 @@ const roomModel = require('../lib/mysql')
 
 router.prefix('/api/room')
 
-router.post('/createRoom', async (ctx, next) => {
-    const { name, desc, ownerid } = ctx.request.body;
-    const result = await roomModel.insertRoom([name, desc, ownerid]);
-    await roomModel.userJoinRoom(result.insertId, ownerid); //创建者加入房间
+router.post('/insertRoom', async (ctx, next) => {
+    // 邀请第三人由对聊房间新建全聊房间
+    const { name, caption, ownerid } = ctx.request.body;
+    const result = await roomModel.insertRoom({ name, caption, ownerid });
+    // await roomModel.userJoinRoom(result.insertId, ownerid); //创建者加入房间
     ctx.body = {
         code: 0,
-        room: { name, desc, ownerid, id: result.insertId }
+        room: { name, caption, ownerid, id: result.insertId }
     }
+});
+
+router.post('/insertChatRoom', async (ctx, next) => {
+    const { uid, fuid } = ctx.request.body;
+    const rooms = await roomModel.findChatRoom({ uid, fuid });
+    if (rooms[0]) {
+        ctx.body = {
+            code: 0,
+            room: rooms[0]
+        }
+    } else {
+        const result = await roomModel.insertChatRoom({ uid, fuid });
+        ctx.body = {
+            code: 0,
+            room: { id: result.insertId }
+        }
+    }
+
 });
 
 // 后台管理
@@ -53,9 +72,11 @@ router.post('/listJoinRoom', async (ctx, next) => {
         }
     }
     await roomModel.listJoinRoom(values);
+    const rooms = await roomModel.findRoom(roomid)
     await roomModel.findUsrsByRoom(roomid).then(users => {
         ctx.body = {
             code: 0,
+            room: rooms[0],
             users: users
         }
     })
@@ -83,12 +104,18 @@ router.get('/getUserRooms', async (ctx, next) => {
 
 router.get('/getRoomUsers', async (ctx, next) => {
     const { roomid } = ctx.request.query;
-    await roomModel.findUsrsByRoom(roomid).then(result => {
-        ctx.body = {
-            code: 0,
-            users: result
-        }
-    });
+    const rooms = await roomModel.findRoom(roomid);
+    let users = [];
+    if (rooms[0].fuid) {
+        users = await roomModel.findUsrsByChatRoom({ roomid, uid: rooms[0].uid, fuid: rooms[0].fuid });
+    } else {
+        users = await roomModel.findUsrsByRoom(roomid)
+    }
+    ctx.body = {
+        code: 0,
+        room: rooms[0],
+        users
+    }
 });
 
 router.get('/getUserFriends', async (ctx, next) => {
@@ -130,9 +157,9 @@ router.get('/searchUsersByName', async (ctx, next) => {
 
 router.post('/createApply', async (ctx, next) => {
     const { verify_message, apply_uid, apply_flist_id, invitees_uid, invitees_flist_id } = ctx.request.body;
-    
+
     const res = await roomModel.findFriend(apply_flist_id, invitees_uid);
-    
+
     if (res[0]) {
         ctx.body = {
             code: -1,
