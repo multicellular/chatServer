@@ -106,4 +106,14 @@ router.get('/info', async (ctx, next) => {
     }
 });
 
+router.post('/modifyBio', async (ctx, next) => {
+    const { userid, bio } = ctx.request.body;
+    await userModel.updateUserBio({ userid, bio }).then(() => {
+        ctx.body = {
+            code: 0
+        }
+    });
+});
+
 module.exports = router
+
