@@ -14,19 +14,19 @@ router.post('/insertRoom', async (ctx, next) => {
     }
 });
 
-router.post('/insertChatRoom', async (ctx, next) => {
+router.post('/insertChat', async (ctx, next) => {
     const { uid, fuid } = ctx.request.body;
-    const rooms = await roomModel.findChatRoom({ uid, fuid });
-    if (rooms[0]) {
+    const chats = await roomModel.findChat({ uid, fuid });
+    if (chats[0]) {
         ctx.body = {
             code: 0,
-            room: rooms[0]
+            chat: chats[0]
         }
     } else {
-        const result = await roomModel.insertChatRoom({ uid, fuid });
+        const result = await roomModel.insertChat({ uid, fuid });
         ctx.body = {
             code: 0,
-            room: { id: result.insertId }
+            chat: { id: result.insertId }
         }
     }
 
@@ -72,7 +72,7 @@ router.post('/listJoinRoom', async (ctx, next) => {
         }
     }
     await roomModel.listJoinRoom(values);
-    const rooms = await roomModel.findRoom(roomid)
+    const rooms = await roomModel.findRoomById(roomid)
     await roomModel.findUsrsByRoom(roomid).then(users => {
         ctx.body = {
             code: 0,
@@ -94,34 +94,77 @@ router.post('/userLeaveRoom', async (ctx, next) => {
 
 router.get('/getUserRooms', async (ctx, next) => {
     const { uid } = ctx.request.query;
-    await roomModel.findRoomsByUser(uid).then(result => {
-        ctx.body = {
-            code: 0,
-            rooms: result
+    const _sqlRoom = `select * from rooms 
+    join (select roomid from room_user where uid=${uid}) as temp 
+    on temp.roomid=rooms.id`;
+    const rooms = await roomModel.query(_sqlRoom);
+    for (let room of rooms) {
+        const { roomid } = room;
+        const _sqlUsers = `select * from users_view uv 
+        left join (select uid from room_user where roomid=${roomid}) as temp 
+        on uv.uid=temp.uid`;
+        const users = await roomModel.query(_sqlUsers);
+        let names = [];
+        let avators = []
+        for (let user of users) {
+            names.push(user.uname);
+            avators.push(user.uavator);
         }
-    });
-});
-
-router.get('/getRoomUsers', async (ctx, next) => {
-    const { roomid } = ctx.request.query;
-    const rooms = await roomModel.findRoom(roomid);
-    let users = [];
-    if (rooms[0].fuid) {
-        users = await roomModel.findUsrsByChatRoom({ roomid, uid: rooms[0].uid, fuid: rooms[0].fuid });
-    } else {
-        users = await roomModel.findUsrsByRoom(roomid)
+        room.avators = avators;
+        if (!room.name) {
+            room.name = names.join(',');
+        }
+        room.room_users = users;
     }
     ctx.body = {
         code: 0,
-        room: rooms[0],
-        users
+        rooms
+    }
+
+});
+
+router.get('/getUserChats', async (ctx, next) => {
+    const { uid } = ctx.request.query;
+    const _sqlChat = `select * from chats where ${uid} in (uid,fuid)`;
+
+    const chats = await roomModel.query(_sqlChat);
+    for (let chat of chats) {
+        const { uid, fuid } = chat;
+        const _sqlUsers = `select * from users_view uv where uv.uid in (${uid},${fuid})`
+        const _sqlName = `select uname,uavator from users_view uv where uv.uid=${fuid}`
+        const users = await roomModel.query(_sqlUsers);
+        const names = await roomModel.query(_sqlName);
+        chat.room_users = users;
+        chat.name = names[0].uname;
+        chat.avators = [names[0].uavator];
+        chat.isChat = true;
+    }
+    ctx.body = {
+        code: 0,
+        chats
     }
 });
+
+// router.get('/getRoomUsers', async (ctx, next) => {
+//     const { roomid } = ctx.request.query;
+//     const rooms = await roomModel.findRoom(roomid);
+//     let users = [];
+//     if (rooms[0].fuid) {
+//         users = await roomModel.findUsrsByChatRoom({ roomid, uid: rooms[0].uid, fuid: rooms[0].fuid });
+//     } else {
+//         users = await roomModel.findUsrsByRoom(roomid)
+//     }
+//     ctx.body = {
+//         code: 0,
+//         room: rooms[0],
+//         users
+//     }
+// });
 
 router.get('/getUserFriends', async (ctx, next) => {
     const { uid } = ctx.request.query;
     const room = await roomModel.findFriendRoom(uid);
-    await roomModel.findUserFriends(uid).then(result => {
+    await roomModel.findFriendsByUser(uid).then(result => {
         ctx.body = {
             code: 0,
             friend_room: room[0],

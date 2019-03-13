@@ -79,7 +79,15 @@ router.get('/info', async (ctx, next) => {
     const { authorization } = ctx.header;
     let payload;
     if (authorization) {
-        payload = await verify(authorization.split(' ')[1], 'my_token');
+        try {
+            payload = await verify(authorization.split(' ')[1], 'my_token');
+        } catch (err) {
+            ctx.body = {
+                code: -1,
+                msg: 'token expired'
+            }
+            return;
+        }
         const result = await userModel.findUserByName(payload.name);
         if (result && result[0]) {
             ctx.body = {

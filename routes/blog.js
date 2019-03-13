@@ -11,7 +11,7 @@ router.get('/getblogs', async (ctx, next) => {
                 source_uid, source_uavator, forward_comment, source_id, source_ubio, moment } = item;
             return {
                 title, content, images, uavator, uname, uid, id, comments, views, forwards, moment, ubio,
-                forwardObj: { source_uname, source_uid, source_uavator, forward_comment, source_id, source_ubio}
+                forwardObj: { source_uname, source_uid, source_uavator, forward_comment, source_id, source_ubio }
             }
         });
 
@@ -44,24 +44,43 @@ router.post('/postblog', async (ctx, next) => {
     } else {
         // 上传的图片为base64格式，先存储图片，在存储路径
         let imageUrls = [];
-        images.forEach((image, idx) => {
-            let base64Data = image.replace(/^data:image\/\w+;base64,/, "");
-            let dataBuffer = Buffer.from(base64Data, 'base64');
-            let urlPath = 'images/' + Date.now() + idx + '.png';
-            fs.writeFileSync('./public/' + urlPath, dataBuffer);
+        const len = images.length;
+        let image, base64Data, dataBuffer, urlPath;
+        for (let i = 0; i < len; i++) {
+            image = images[i];
+            base64Data = image.replace(/^data:image\/\w+;base64,/, "");
+            dataBuffer = Buffer.from(base64Data, 'base64');
+            urlPath = 'images/' + Date.now() + '.png';
+            await fs.writeFile('./public/' + urlPath, dataBuffer, (err, data) => {
+                if (err) {
+                    throw err;
+                }
+            });
             imageUrls.push(urlPath);
-        });
+        }
         imageUrlsStr = imageUrls.join(',');
     }
-    await blogModel.insertBlog({ title, content, images: imageUrlsStr, uid, forward_comment, source_id }).then(result => {
-        ctx.body = {
-            code: 0,
-            blog: {
-                title, content, images: imageUrlsStr, uid, comments: '0', views: '0', forwards: '0',
-                id: result.insertId, forward_comment, source_id
-            }
+    const result = await blogModel.insertBlog({ title, content, images: imageUrlsStr, uid, forward_comment, source_id });
+    const blogs = await blogModel.findBlogById(result.insertId);
+
+    const { uavator, uname, ubio, id, source_uname, comments, views, forwards,
+        source_uid, source_uavator, source_ubio, moment } = blogs[0];
+    ctx.body = {
+        code: 0,
+        blog: {
+            title: blogs[0].title, content: blogs[0].content, images: blogs[0].images, uavator, uname, uid: blogs[0].uid, id, comments, views, forwards, moment, ubio,
+            forwardObj: { source_uname, source_uid, source_uavator, forward_comment: blogs[0].forward_comment, source_id: blogs[0].source_id, source_ubio }
         }
-    }).catch(err => console.log(err));
+    }
+    // .then(result => {
+    //     ctx.body = {
+    //         code: 0,
+    //         blog: {
+    //             title, content, images: imageUrlsStr, uid, comments: '0', views: '0', forwards: '0',
+    //             id: result.insertId, forward_comment, source_id
+    //         }
+    //     }
+    // }).catch(err => console.log(err));
 });
 
 router.post('/postcomment', async (ctx, next) => {

@@ -18,4 +18,28 @@ router.get('/index', async (ctx, next) => {
   }
 })
 
+router.post('/uploadImage', async (ctx, next) => {
+  let image = ctx.request.body;
+  if (!image) {
+    ctx.body = {
+      code: -1,
+      msg: 'image is null'
+    }
+    return;
+  }
+  let base64Data, dataBuffer, urlPath;
+  base64Data = image.replace(/^data:image\/\w+;base64,/, "");
+  dataBuffer = Buffer.from(base64Data, 'base64');
+  urlPath = 'images/' + Date.now() + '.png';
+  await fs.writeFile('./public/' + urlPath, dataBuffer, (err, data) => {
+    if (err) {
+      throw err;
+    }
+  });
+  ctx.body = {
+    code: 0,
+    image: urlPath
+  }
+})
+
 module.exports = router

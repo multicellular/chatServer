@@ -7,8 +7,7 @@
 var app = require('../app');
 var debug = require('debug')('demo:server');
 var http = require('http');
-// var io = require('../io');
-
+var IOServer = require('../io');
 
 /**
  * Get port from environment and store in Express.
@@ -31,15 +30,7 @@ server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
 // socket.io
-const io = require('socket.io')(server);
-io.on('connection', socket => {
-  socket.on('user', user => {
-    if (user) {
-      socket.emit('hello', 'hello ' + user.name);
-      io.emit('hello', 'welcome ' + user.name);
-    }
-  });
-});
+new IOServer(server);
 /**
  * Normalize a port into a number, string, or false.
  */
