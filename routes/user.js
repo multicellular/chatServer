@@ -29,11 +29,11 @@ router.post('/signup', async (ctx, next) => {
                 msg: '用户已经存在！'
             }
         } else {
-            let base64Data = avator.replace(/^data:image\/\w+;base64,/, "");
-            let dataBuffer = Buffer.from(base64Data, 'base64');
-            let urlPath = 'avators/' + Date.now() + '.png';
-            await fs.writeFile('./public/' + urlPath, dataBuffer, err => { if (err) throw err; });
-            const user = await userModel.insertUser([name, md5(password), urlPath]);
+            // let base64Data = avator.replace(/^data:image\/\w+;base64,/, "");
+            // let dataBuffer = Buffer.from(base64Data, 'base64');
+            // let urlPath = 'avators/' + Date.now() + '.png';
+            // await fs.writeFile('./public/' + urlPath, dataBuffer, err => { if (err) throw err; });
+            const user = await userModel.insertUser([name, md5(password), avator]);
             // name=?,row_desc=?,uid=?
             const friends = await userModel.insertFriendRoom([user.insertId, '好友列表', null]);
             // flist_id=?,uremark=?,uid=?

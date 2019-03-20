@@ -44,10 +44,27 @@ router.get('/index', async (ctx, next) => {
 // })
 
 router.post('/api/uploadFile', async (ctx, next) => {
-  
-  const file = ctx.request.files.file;
-  const url = file.path.split('public')[1];
-  file.path = url;
+
+  const file = ctx.request.files.file || [];
+
+  let fileObjArr = [];
+  let fileStr;
+  if (file.length > 0) {
+    let fileStrArr = [];
+    file.forEach(item => {
+      const path = item.path ? item.path.split('public/')[1] : '';
+      fileObjArr.push({
+        name: item.name,
+        path: path
+      });
+      fileStrArr.push(path);
+    });
+    fileStr = fileStrArr.join(',');
+  } else {
+    const path = file.path ? file.path.split('public/')[1] : '';
+    fileObjArr = [{ name: file.name, path }]
+    fileStr = path;
+  }
   // const file = ctx.request.files.file;
   // if (!file) {
   //   ctx.body = {
@@ -67,7 +84,8 @@ router.post('/api/uploadFile', async (ctx, next) => {
   // }
   ctx.body = {
     code: 0,
-    file
+    files: fileObjArr,
+    urls: fileStr
   };
 })
 
