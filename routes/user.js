@@ -1,6 +1,6 @@
 const router = require('koa-router')()
 const userModel = require('../lib/mysql')
-const fs = require('fs')
+// const fs = require('fs')
 const md5 = require('md5')
 const jwt = require('jsonwebtoken')
 

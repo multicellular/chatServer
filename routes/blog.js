@@ -1,6 +1,6 @@
 const router = require('koa-router')()
 const blogModel = require('../lib/mysql')
-const fs = require('fs')
+// const fs = require('fs')
 
 router.prefix('/api/blog');
 
@@ -18,6 +18,17 @@ router.get('/getblogs', async (ctx, next) => {
         ctx.body = {
             code: 0,
             blogs
+        }
+    }).catch(err => console.log(err));
+});
+
+router.get('/deleteBlog', async (ctx, next) => {
+    // token blogid->blog->uid == bloguid
+
+    const { blogid } = ctx.request.query;
+    await blogModel.deleteBlog(blogid).then(result => {
+        ctx.body = {
+            code: 0
         }
     }).catch(err => console.log(err));
 });
@@ -50,6 +61,7 @@ router.get('/getcomments', async (ctx, next) => {
         }
     }).catch(err => console.log(err));
 });
+
 
 router.post('/postblog', async (ctx, next) => {
     const { title, content, media_urls, media_type, uid, forward_comment, source_id, is_private } = ctx.request.body;
@@ -108,9 +120,10 @@ router.post('/postcomment', async (ctx, next) => {
             const comments = parseInt(res[0]['comments']) + 1;
             blogModel.unpdateBlogComments([comments, blogid]);
         });
+        const comments = await blogModel.findCommentById(result.insertId);
         ctx.body = {
             code: 0,
-            comment: { blogid, content, uid, id: result.insertId }
+            comment: comments[0]
         }
     }).catch(err => console.log(err));
 });
