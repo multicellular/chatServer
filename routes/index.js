@@ -46,7 +46,6 @@ router.get('/index', async (ctx, next) => {
 router.post('/api/uploadFile', async (ctx, next) => {
 
   const file = ctx.request.files.file || [];
-
   let fileObjArr = [];
   let fileStr;
   if (file.length > 0) {
