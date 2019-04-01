@@ -38,9 +38,19 @@ router.post('/signup', async (ctx, next) => {
             const friends = await userModel.insertFriendRoom([user.insertId, '好友列表', null]);
             // flist_id=?,uremark=?,uid=?
             await userModel.insertFriend({ flist_id: friends.insertId, uid: user.insertId });
+            const payload = {
+                id: user.insertId,
+                name: name
+            };
+            const my_token = jwt.sign(payload, 'my_token', { expiresIn: '168h' });
             ctx.body = {
                 code: 0,
-                user: user
+                user: {
+                    id: user.insertId,
+                    name: name,
+                    avator: avator
+                },
+                token: my_token
             }
         }
     });
@@ -55,7 +65,7 @@ router.post('/signin', async (ctx, next) => {
                 id: result[0].id,
                 name: result[0].name
             };
-            const my_token = jwt.sign(payload, 'my_token', { expiresIn: '24h' });
+            const my_token = jwt.sign(payload, 'my_token', { expiresIn: '168h' });
             ctx.body = {
                 code: 0,
                 token: my_token,
