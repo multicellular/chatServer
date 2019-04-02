@@ -133,5 +133,15 @@ router.post('/modifyBio', async (ctx, next) => {
     });
 });
 
+router.get('/profile', async (ctx, next) => {
+    const { uid } = ctx.request.query;
+    await userModel.findUserById(uid).then((res) => {
+        ctx.body = {
+            code: 0,
+            profile: res[0]
+        }
+    });
+});
+
 module.exports = router
 
