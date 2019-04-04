@@ -199,9 +199,20 @@ router.get('/searchUsersByName', async (ctx, next) => {
 });
 
 router.post('/createApply', async (ctx, next) => {
+
+    let apply_froom_id;
     const { verify_message, apply_uid, apply_flist_id, invitees_uid, invitees_flist_id } = ctx.request.body;
 
-    const res = await roomModel.findFriend(apply_flist_id, invitees_uid);
+    if (!apply_flist_id) {
+        // mobile,TODO 统一
+        const room = await roomModel.findFriendRoom(apply_uid);
+        apply_froom_id = room[0].id;
+    } else {
+        apply_froom_id = apply_flist_id;
+    }
+
+
+    const res = await roomModel.findFriend(apply_froom_id, invitees_uid);
 
     if (res[0]) {
         ctx.body = {
@@ -211,7 +222,7 @@ router.post('/createApply', async (ctx, next) => {
         return;
     }
     const result = await roomModel.insertApply({
-        verify_message, apply_uid, apply_flist_id,
+        verify_message, apply_uid, apply_flist_id: apply_froom_id,
         invitees_uid, invitees_flist_id
     });
 
