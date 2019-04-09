@@ -16,18 +16,26 @@ router.post('/insertRoom', async (ctx, next) => {
 
 router.post('/insertChat', async (ctx, next) => {
     const { uid, fuid } = ctx.request.body;
-    const chats = await roomModel.findChat({ uid, fuid });
-    if (chats[0]) {
-        ctx.body = {
-            code: 0,
-            chat: chats[0]
-        }
-    } else {
-        const result = await roomModel.insertChat({ uid, fuid });
-        ctx.body = {
-            code: 0,
-            chat: { id: result.insertId }
-        }
+    let chat;
+    let chats = await roomModel.findChat({ uid, fuid });
+    chat = chats[0];
+    if (!chat) {
+        await roomModel.insertChat({ uid, fuid });
+        chats = await roomModel.findChat({ uid, fuid });
+        chat = chats[0];
+    }
+    const _sqlUsers = `select * from users_view uv where uv.uid in (${uid},${fuid})`
+    const _sqlName = `select uname,uavator,uid from users_view uv where uv.uid=${fuid}`
+    const users = await roomModel.query(_sqlUsers);
+    const friends = await roomModel.query(_sqlName);
+    chat.room_users = users;
+    chat.name = friends[0].uname;
+    chat.avators = [friends[0].uavator];
+    chat.isChat = true;
+    chat.chatid = friends[0].uid;
+    ctx.body = {
+        code: 0,
+        chat
     }
 
 });
@@ -131,13 +139,14 @@ router.get('/getUserChats', async (ctx, next) => {
     for (let chat of chats) {
         const { uid, fuid } = chat;
         const _sqlUsers = `select * from users_view uv where uv.uid in (${uid},${fuid})`
-        const _sqlName = `select uname,uavator from users_view uv where uv.uid=${fuid}`
+        const _sqlName = `select uname,uavator,uid from users_view uv where uv.uid=${fuid}`
         const users = await roomModel.query(_sqlUsers);
         const names = await roomModel.query(_sqlName);
         chat.room_users = users;
         chat.name = names[0].uname;
         chat.avators = [names[0].uavator];
         chat.isChat = true;
+        chat.chatid = names[0].uid;
     }
     ctx.body = {
         code: 0,
