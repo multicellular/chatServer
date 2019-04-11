@@ -137,7 +137,8 @@ router.get('/getUserChats', async (ctx, next) => {
 
     const chats = await roomModel.query(_sqlChat);
     for (let chat of chats) {
-        const { uid, fuid } = chat;
+        // const { uid, fuid } = chat;
+        const fuid = chat.fuid == uid ? chat.uid : chat.fuid;
         const _sqlUsers = `select * from users_view uv where uv.uid in (${uid},${fuid})`
         const _sqlName = `select uname,uavator,uid from users_view uv where uv.uid=${fuid}`
         const users = await roomModel.query(_sqlUsers);
