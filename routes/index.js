@@ -1,5 +1,8 @@
 const router = require('koa-router')()
-const fs = require('fs')
+const fetch = require('node-fetch')
+const jwt = require('jsonwebtoken')
+const userModel = require('../lib/mysql')
+const md5 = require('md5')
 
 router.get('/', async (ctx, next) => {
   await ctx.render('index', {
@@ -8,9 +11,9 @@ router.get('/', async (ctx, next) => {
 })
 
 router.get('/json', async (ctx, next) => {
-  ctx.body = {
-    title: 'koa2 json'
-  }
+  // ctx.body = {
+  //   title: 'koa2 json'
+  // }
 })
 
 router.get('/index', async (ctx, next) => {
@@ -24,7 +27,7 @@ router.get('/index', async (ctx, next) => {
 // login-app server
 router.get('/api/login/rfinex', async (ctx, next) => {
   // from login-app page
-  const {} = ctx.request.query
+  const { } = ctx.request.query
   const redirect_uri = 'https://www.iconfont.cn/api/login/github/callback&state=123123sadh1as12';
   const client_id = 'bfe378e98cde9624c98c';
   // to rfinex server_api
@@ -50,9 +53,9 @@ router.get('/login/oauth/authorize', async (ctx, next) => {
 // rfinex server
 router.get('/api/rfinex_session', async (ctx, next) => {
   // from rfinex (login) page
-  const {return_to} =  ctx.request.query;
+  const { return_to } = ctx.request.query;
   const session = true;
-  if(session) {
+  if (session) {
     // to finex server (/login/oauth/authorize) again with rfinex_session
     ctx.redirect.redirect(return_to);
   } else {
@@ -65,9 +68,9 @@ router.get('/api/rfinex_session', async (ctx, next) => {
 // rfinex server
 router.get('/api/rfinex_session', async (ctx, next) => {
   // from rfinex (login) page
-  const {return_to} =  ctx.request.query;
+  const { return_to } = ctx.request.query;
   const session = true;
-  if(session) {
+  if (session) {
     // to finex server (/login/oauth/authorize) again with rfinex_session
     ctx.redirect.redirect(return_to);
   } else {
@@ -80,7 +83,7 @@ router.get('/api/rfinex_session', async (ctx, next) => {
 // login-app server
 router.get('/api/login/rfinex/callback', async (ctx, next) => {
   // from rfinex server
-  const {code} = ctx.request.query;
+  const { code } = ctx.request.query;
   // go rfinex oauth server code -> access_token -> user info
   const is_success = `getInfoWidthCode(${code})`;
   if (is_success) {
@@ -94,6 +97,63 @@ router.get('/api/login/rfinex/callback', async (ctx, next) => {
 
 })
 
+
+router.get('/api/github_oauth', async (ctx, next) => {
+
+  const client_id = 'c09b6de239665b80b05b';
+  const redirect_uri = 'http://localhost:3000/api/github_oauth_token';
+  ctx.redirect(`https://github.com/login/oauth/authorize?client_id=${client_id}&redirect_uri=${redirect_uri}`);
+
+})
+
+router.get('/api/github_oauth_token', async (ctx, next) => {
+
+  const { code } = ctx.request.query;
+  const path = 'https://github.com/login/oauth/access_token';
+  const redirect_uri = 'http://localhost:3000/api/github_oauth_login';
+  const params = {
+    client_id: 'c09b6de239665b80b05b',
+    client_secret: '999ef599f4d6db119d07d82c32e2c79790d5ffb9',
+    code,
+    redirect_uri
+  };
+  await fetch(path, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify(params)
+  }).then(res => res.json()).then(async ({ access_token }) => {
+    const path = 'https://api.github.com/user';
+    await fetch(path, {
+      method: 'GET',
+      headers: {
+        Authorization: `token ${access_token}`
+      }
+    }).then(res => res.json()).then(async (oauth_user) => {
+      // 获取的oauth user
+      const { id: oauth_id, login: oauth_name, avatar_url: oauth_avatar } = oauth_user;
+      const result = userModel.findOauthUser(oauth_id);
+      let uid;
+      if (result[0]) {
+        uid = result[0].uid;
+      } else {
+        const result2 = await userModel.insertUser([oauth_name, md5('123456'), oauth_avatar])
+        uid = result2.insertId;
+        await userModel.insertOauthUser({ oauth_id, uid });
+      }
+      const payload = {
+        id: uid,
+        name: oauth_name
+      };
+      const my_token = jwt.sign(payload, 'my_token', { expiresIn: '168h' });
+      ctx.cookies.set('oauth_token', my_token, { httpOnly: false });
+      ctx.redirect('/')
+    })
+  });
+
+})
 
 // mock oauth
 

@@ -122,9 +122,20 @@ socketApp.ws.use(route.all('/connect/:connectid', async (ctx, connectid) => {
         }
         offlineMsgs = temps;
       }
-    }
-    if (msg === 'disconnect') {
+    } else if (msg === 'disconnect') {
       delete user_client[connectid];
+    } else {
+      try {
+        // 处理好友申请。视频通话等公共消息
+        const msg = JSON.parse(msg);
+        msg.moment = Date.now().toString();
+        if (user_client[msg.toid]) {
+          // 是否app在线
+          user_client[msg.toid].send(JSON.stringify(msg));
+        }
+      } catch (error) {
+        console.log(error);
+      }
     }
   })
 
@@ -138,7 +149,7 @@ socketApp.ws.use(route.all('/connect/:connectid', async (ctx, connectid) => {
     if (offlineMsgs.length > 0) {
       // 离线消息（未发出的消息）上线后发出
       for (let i = 0; i < offlineMsgs.length; i++) {
-        
+
         const offMsg = offlineMsgs[i];
         if (offMsg.toid == connectid) {
           client.send(JSON.stringify(offMsg.msg));
