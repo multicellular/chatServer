@@ -105,9 +105,9 @@ socketApp.ws.use(route.all('/connect/:connectid', async (ctx, connectid) => {
   // `ctx` is the regular koa context created from the `ws` onConnection `socket.upgradeReq` object.
   // the websocket is added to the context on `ctx.websocket`.
   const client = ctx.websocket;
-  client.on('message', function (msg) {
+  client.on('message', function (message) {
     // 发送消息给服务器
-    if (msg === 'connect') {
+    if (message === 'connect') {
       var temps = [];
       user_client[connectid] = client;
       if (offlineMsgs.length > 0) {
@@ -122,12 +122,12 @@ socketApp.ws.use(route.all('/connect/:connectid', async (ctx, connectid) => {
         }
         offlineMsgs = temps;
       }
-    } else if (msg === 'disconnect') {
+    } else if (message === 'disconnect') {
       delete user_client[connectid];
     } else {
       try {
         // 处理好友申请。视频通话等公共消息
-        const msg = JSON.parse(msg);
+        const msg = JSON.parse(message);
         msg.moment = Date.now().toString();
         if (user_client[msg.toid]) {
           // 是否app在线
