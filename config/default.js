@@ -3,9 +3,8 @@ module.exports = {
         DATABASE: 'chat_nodejs',
         USERNAME: 'root',
         // HOST: 'localhost',
-        HOST: '121.196.192.183',
+        HOST: '49.235.114.14',
         PORT: '3306',
-        // PASSWORD: 'wanghy001mm'
-        PASSWORD: 'Wanghy001mm'
+        PASSWORD: 'wanghy001mm'
     }
 }
