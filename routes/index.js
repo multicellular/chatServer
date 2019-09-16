@@ -149,7 +149,7 @@ router.get('/api/github_oauth_token', async (ctx, next) => {
       };
       const my_token = jwt.sign(payload, 'my_token', { expiresIn: '168h' });
       ctx.cookies.set('oauth_token', my_token, { httpOnly: false });
-      ctx.redirect('/')
+      ctx.redirect('http://49.235.114.14')
     })
   });
 
