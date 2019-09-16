@@ -101,7 +101,7 @@ router.get('/api/login/rfinex/callback', async (ctx, next) => {
 router.get('/api/github_oauth', async (ctx, next) => {
 
   const client_id = 'e080c36a987d92ff9526';
-  const redirect_uri = 'http://www.lovepean.xyz:3000/api/github_oauth_token';
+  const redirect_uri = 'http://49.235.114.14:3000/api/github_oauth_token';
   ctx.redirect(`https://github.com/login/oauth/authorize?client_id=${client_id}&redirect_uri=${redirect_uri}`);
 
 })
@@ -110,7 +110,7 @@ router.get('/api/github_oauth_token', async (ctx, next) => {
 
   const { code } = ctx.request.query;
   const path = 'https://github.com/login/oauth/access_token';
-  const redirect_uri = 'http://www.lovepean.xyz:3000/api/github_oauth_login';
+  const redirect_uri = 'http://49.235.114.14:3000/api/github_oauth_login';
   const params = {
     client_id: 'e080c36a987d92ff9526',
     client_secret: 'bb9f3ed66039f482a6daee8ce8c2044d505a2a3d',
