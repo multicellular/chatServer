@@ -33,7 +33,7 @@ router.post('/signup', async (ctx, next) => {
             // let dataBuffer = Buffer.from(base64Data, 'base64');
             // let urlPath = 'avators/' + Date.now() + '.png';
             // await fs.writeFile('./public/' + urlPath, dataBuffer, err => { if (err) throw err; });
-            const user = await userModel.insertUser([name, md5(password), avator]);
+            const user = await userModel.insertUser([name, md5(password), avator, 0]);
             // name=?,row_desc=?,uid=?
             const friends = await userModel.insertFriendRoom([user.insertId, '好友列表', null]);
             // flist_id=?,uremark=?,uid=?
