@@ -26,17 +26,21 @@ onerror(app)
 // }))
 
 // middlewares  bodyparser
+const fp = path.join(__dirname, 'public/files/');
+if (!fs.existsSync(fp)) {
+  fs.mkdirSync(fp);
+}
 app.use(koaBody({
   multipart: true,
   formidable: {
-    uploadDir: path.join(__dirname, 'public/files/'),
+    uploadDir: fp,
     keepExtensions: true,
     maxFieldsSize: 10 * 1024 * 1024,
     onFileBegin: (name, file) => {
-      const fp = path.join(__dirname, 'public/files/');
-      if (!fs.existsSync(fp)) {
-        fs.mkdirSync(fp);
-      }
+      // const fp = path.join(__dirname, 'public/files/');
+      // if (!fs.existsSync(fp)) {
+      //   fs.mkdirSync(fp);
+      // }
     }
   }
 }));
