@@ -61,6 +61,13 @@ router.post('/signin', async (ctx, next) => {
     const { name, password } = ctx.request.body;
     await userModel.findUserByName(name).then(result => {
         if (result[0] && result[0].password === md5(password)) {
+            if (result[0].is_oauth) {
+                ctx.body = {
+                    code: -1,
+                    msg: '该账户为oauth用户！'
+                }
+                return;
+            }
             const payload = {
                 id: result[0].id,
                 name: result[0].name
