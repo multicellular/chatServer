@@ -60,15 +60,15 @@ app.use(views(__dirname + '/views', {
   // extension: 'html'
 }))
 
-app.use(session({
-  key: 'USER_SID',
-  store: new MysqlStore({
-    user: config.database.USERNAME,
-    password: config.database.PASSWORD,
-    database: config.database.DATABASE,
-    host: config.database.HOST
-  })
-}))
+//app.use(session({
+ // key: 'USER_SID',
+ // store: new MysqlStore({
+   // user: config.database.USERNAME,
+   // password: config.database.PASSWORD,
+   // database: config.database.DATABASE,
+   // host: config.database.HOST
+ // })
+//}))
 
 // logger
 app.use(async (ctx, next) => {
@@ -278,6 +278,6 @@ socketApp.ws.use(route.all('/room/:roomid/:sendid', async (ctx, roomid, sendid) 
   // })
 
 }));
-socketApp.listen(3001);
+socketApp.listen(8001);
 
 module.exports = app

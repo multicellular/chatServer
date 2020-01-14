@@ -101,8 +101,8 @@ router.get('/index', async (ctx, next) => {
 router.get('/api/github_oauth', async (ctx, next) => {
 
   const client_id = 'e080c36a987d92ff9526';
-  const redirect_uri = 'http://49.235.114.14:3000/api/github_oauth_token';
-  ctx.redirect(`https://github.com/login/oauth/authorize?client_id=${client_id}&redirect_uri=${redirect_uri}`);
+  const redirect_uri = 'http://uknow.xyz:3000/api/github_oauth_token';
+  ctx.redirect(`https://github.com/login/oauth/authorize?client_id=${client_id}&redirect_uri=${redirect_uri}&state=uknow`);
 
 })
 
@@ -110,12 +110,13 @@ router.get('/api/github_oauth_token', async (ctx, next) => {
 
   const { code } = ctx.request.query;
   const path = 'https://github.com/login/oauth/access_token';
-  const redirect_uri = 'http://49.235.114.14:3000/api/github_oauth_login';
+  const redirect_uri = 'http://uknow.xyz:3000/api/github_oauth_token';
   const params = {
     client_id: 'e080c36a987d92ff9526',
     client_secret: 'bb9f3ed66039f482a6daee8ce8c2044d505a2a3d',
     code,
-    redirect_uri
+    redirect_uri,
+    state: 'uknow'
   };
   await fetch(path, {
     method: 'POST',
@@ -124,7 +125,9 @@ router.get('/api/github_oauth_token', async (ctx, next) => {
       'Accept': 'application/json'
     },
     body: JSON.stringify(params)
-  }).then(res => res.json()).then(async ({ access_token }) => {
+  }).then(res => res.json()).then(async (resp) => {
+//console.log(resp,'access_token===============')
+	const	access_token = resp.access_token;
     const path = 'https://api.github.com/user';
     await fetch(path, {
       method: 'GET',
@@ -134,14 +137,26 @@ router.get('/api/github_oauth_token', async (ctx, next) => {
     }).then(res => res.json()).then(async (oauth_user) => {
       // 获取的oauth user
       const { id: oauth_id, login: oauth_name, avatar_url: oauth_avatar } = oauth_user;
+      if (!oauth_id) {
+	ctx.body = {
+	  code: -1,
+	  msg: oauth_user.message
+	}
+	return oauth_user;
+      }
       const result = userModel.findOauthUser(oauth_id);
       let uid;
       if (result[0]) {
         uid = result[0].uid;
       } else {
-        const result2 = await userModel.insertUser([oauth_name, md5('123456'), oauth_avatar, 1])
-        uid = result2.insertId;
-        await userModel.insertOauthUser({ oauth_id, uid });
+	//console.log(oauth_user,'oauth_user==============================')
+	try {
+       	 const result2 = await userModel.insertUser([oauth_name, md5('123456'), oauth_avatar, 1])
+       	 uid = result2.insertId;
+       	 await userModel.insertOauthUser({ oauth_id, uid });
+	} catch(err) {
+	 ctx.redirect('http://uknow.xyz:3000')
+	}
       }
       const payload = {
         id: uid,
@@ -149,7 +164,7 @@ router.get('/api/github_oauth_token', async (ctx, next) => {
       };
       const my_token = jwt.sign(payload, 'my_token', { expiresIn: '168h' });
       ctx.cookies.set('oauth_token', my_token, { httpOnly: false });
-      ctx.redirect('http://49.235.114.14')
+      ctx.redirect('http://uknow.xyz:3000')
     })
   });
 
